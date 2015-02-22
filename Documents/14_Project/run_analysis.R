@@ -1,3 +1,8 @@
+    library(plyr)
+    library(dplyr)
+    library(reshape2)
+    
+    
     train <- data.frame()
     x_train <- read.table("./UCI HAR Dataset/train/X_train.txt")
     subject_train  <- read.table("./UCI HAR Dataset/train/subject_train.txt")
@@ -27,3 +32,23 @@
     meandata<-data[,grep('mean',names(data))]
     combineddata <- cbind(data$Subjectname, data$yname, stddata, meandata)
     
+    cdata <- tbl_df(combineddata)
+    
+    activity_labels <- read.table("./UCI HAR Dataset/activity_labels.txt")
+    vnames <- read.table("./UCI HAR Dataset/labelnames.txt", stringsAsFactors = F)
+    variabelnames <- data.frame()
+    
+    id = 1:82
+    for (i in id) {
+      variabelnames <- rbind(variabelnames, as.character(vnames[,i]))
+    }
+    
+    comdata <- merge(cdata, activity_labels, by.x = "data$yname", by.y = "V1")
+    
+    for (i in id) {
+      colnames(comdata)[i] <- as.character(variabelnames[i,])
+    }
+    
+    melted <- melt(comdata, id.vars=c("Subject_Name", "Activityname"))
+    k <- arrange(melted, Subject_Name, Activityname)
+    final <- ddply(k, c("Subject_Name", "Activityname", "variable"), summarise, mean(value))
